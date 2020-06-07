@@ -6,6 +6,7 @@ import { LeafletMouseEvent } from 'leaflet';
 import api from '../../services/api';
 import axios from 'axios';
 
+import Dropzone from '../../components/Dropzone';
 import './styles.css';
 import logo from '../../assets/logo.svg';
 
@@ -40,6 +41,7 @@ const CreatePoint = () => {
   const [selectedCity, setSelectedCity] = useState('0');
   const [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File>();
 
   const history = useHistory();
 
@@ -60,7 +62,7 @@ const CreatePoint = () => {
   useEffect(() => {
     axios.get<IBGEUFResponse[]>('https://servicodados.ibge.gov.br/api/v1/localidades/estados').then(response => {
       const ufInitials = response.data.map(uf => (uf.sigla));
-      setUfs(ufInitials);
+      setUfs(ufInitials.sort());
     })
   }, []);
 
@@ -93,7 +95,7 @@ const CreatePoint = () => {
       const filteredItems = selectedItems.filter(item => item !== id);
       setSelectedItems(filteredItems);
     } else{
-      setSelectedItems([ ... selectedItems, id ]);
+      setSelectedItems([ ...selectedItems, id ]);
     }
   }
 
@@ -114,15 +116,19 @@ const CreatePoint = () => {
     const [latitude, longitude] = selectedPosition;
     const items = selectedItems;
 
-    const data = {
-      name,
-      email,
-      whatsapp,
-      uf,
-      city,
-      latitude,
-      longitude,
-      items
+    const data = new FormData();
+
+    data.append('name', name);
+    data.append('email', email);
+    data.append('whatsapp', whatsapp);
+    data.append('uf', uf);
+    data.append('city', city);
+    data.append('latitude', String(latitude));
+    data.append('longitude', String(longitude));
+    data.append('items', items.join(','));
+
+    if(selectedFile){
+      data.append('image', selectedFile);
     }
 
     await api.post('points', data);
@@ -143,6 +149,7 @@ const CreatePoint = () => {
       </header>
       <form onSubmit={handleSubmit}>
         <h1>Cadastro do <br/>Ponto de Coleta</h1>
+        <Dropzone onFileUploaded={setSelectedFile} />
         <fieldset>
           <legend>
             <h2>Dados</h2>
