@@ -1,4 +1,4 @@
 node_modules/
 backend/src/database/database.sqlite
-backend/uploads
+backend/uploads/*
 !backend/uploads/*.svg
